@@ -1,0 +1,2 @@
+Wykladowca;hubi;123;501
+Student;hubertp;12;1002
