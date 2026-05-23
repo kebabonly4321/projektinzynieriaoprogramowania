@@ -71,7 +71,7 @@ void System::menuGlowne() {
 }
 
 void System::rejestracja() {
-    string login, haslo;
+    string login, haslo, hasloPowtorzone;
     char typ;
 
     cout << "\n===== REJESTRACJA =====\n";
@@ -83,8 +83,17 @@ void System::rejestracja() {
         return;
     }
 
-    cout << "Haslo: ";
-    cin >> haslo;
+    while (true) {
+        cout << "Haslo: ";
+        cin >> haslo;
+        cout << "Powtorz haslo: ";
+        cin >> hasloPowtorzone;
+
+        if (haslo == hasloPowtorzone) {
+            break;
+        }
+        cout << "Hasla nie sa takie same. Sprobuj ponownie.\n";
+    }
 
     while (true) {
         cout << "Wybierz typ konta:\n";
