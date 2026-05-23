@@ -38,6 +38,7 @@ void System::menuGlowne() {
         cout << "0. Wyjscie\n";
         cout << "Wybor: ";
         cin >> wybor;
+        cin.ignore(1000, '\n');
 
         switch (wybor) {
             case '1': {
@@ -71,7 +72,7 @@ void System::menuGlowne() {
 
 void System::rejestracja() {
     string login, haslo;
-    int typ;
+    char typ;
 
     cout << "\n===== REJESTRACJA =====\n";
     cout << "Login: ";
@@ -85,40 +86,92 @@ void System::rejestracja() {
     cout << "Haslo: ";
     cin >> haslo;
 
-    cout << "Wybierz typ konta:\n";
-    cout << "1. Student\n";
-    cout << "2. Wykladowca\n";
-    cout << "Wybor: ";
-    cin >> typ;
+    while (true) {
+        cout << "Wybierz typ konta:\n";
+        cout << "1. Student\n";
+        cout << "2. Wykladowca\n";
+        cout << "Wybor: ";
+        cin >> typ;
+        cin.ignore(1000, '\n');
 
-    if (typ == 1) {
-        int album;
-        cout << "Podaj numer albumu: ";
-        cin >> album;
+        if (typ == '1') {
+            int album;
+            while (true) {
+                cout << "Podaj numer albumu: ";
+                cin >> album;
 
-        if (!czyAlbumDozwolony(album)) {
-            cout << "Nie ma takiego numeru albumu w bazie.\n";
+                if (cin.fail()) {
+                    cin.clear();
+                    cin.ignore(1000, '\n');
+                    cout << "Niepoprawny numer.\n";
+                    cout << "1. Sprobuj ponownie.\n";
+                    cout << "0. Powrot.\n";
+                    cout << "Wybor: ";
+                    char input;
+                    cin >> input;
+                    cin.ignore(1000, '\n');
+                    if (input == '0') return;
+                    continue;
+                }
+                cin.ignore(1000, '\n');
+
+                if (!czyAlbumDozwolony(album)) {
+                    cout << "Nie ma takiego numeru albumu w bazie.\n";
+                    cout << "1. Sprobuj ponownie.\n";
+                    cout << "0. Powrot.\n";
+                    cout << "Wybor: ";
+                    char input;
+                    cin >> input;
+                    cin.ignore(1000, '\n');
+                    if (input == '0') return;
+                    continue;
+                }
+                break;
+            }
+            uzytkownicy.push_back(new Student(login, haslo, album));
+            cout << "Zarejestrowano studenta.\n";
             return;
-        }
 
-        uzytkownicy.push_back(new Student(login, haslo, album));
-        cout << "Zarejestrowano studenta.\n";
+        } else if (typ == '2') {
+            int id;
+            while (true) {
+                cout << "Podaj ID wykladowcy: ";
+                cin >> id;
 
-    } else if (typ == 2) {
-        int id;
-        cout << "Podaj ID wykladowcy: ";
-        cin >> id;
+                if (cin.fail()) {
+                    cin.clear();
+                    cin.ignore(1000, '\n');
+                    cout << "Niepoprawne ID.\n";
+                    cout << "1. Sprobuj ponownie.\n";
+                    cout << "0. Powrot.\n";
+                    cout << "Wybor: ";
+                    char input;
+                    cin >> input;
+                    cin.ignore(1000, '\n');
+                    if (input == '0') return;
+                    continue;
+                }
+                cin.ignore(1000, '\n');
 
-        if (!czyIdWykladowcyDozwolone(id)) {
-            cout << "Nie ma takiego ID wykladowcy w bazie.\n";
+                if (!czyIdWykladowcyDozwolone(id)) {
+                    cout << "Nie ma takiego ID wykladowcy w bazie.\n";
+                    cout << "1. Sprobuj ponownie\n.";
+                    cout << "0. Powrot.\n";
+                    cout << "Wybor: ";
+                    char input;
+                    cin >> input;
+                    cin.ignore(1000, '\n');
+                    if (input == '0') return;
+                    continue;
+                }
+                break;
+            }
+            uzytkownicy.push_back(new Wykladowca(login, haslo, id));
+            cout << "Zarejestrowano wykladowce.\n";
             return;
+        } else {
+            cout << "Niepoprawny typ konta.\n";
         }
-
-        uzytkownicy.push_back(new Wykladowca(login, haslo, id));
-        cout << "Zarejestrowano wykladowce.\n";
-
-    } else {
-        cout << "Niepoprawny typ konta.\n";
     }
 }
 
@@ -153,6 +206,7 @@ void System::menuStudenta(Student* student) {
         cout << "0. Wyloguj\n";
         cout << "Wybor: ";
         cin >> wybor;
+        cin.ignore(1000, '\n');
 
         switch (wybor) {
             case '1':
@@ -172,7 +226,7 @@ void System::menuStudenta(Student* student) {
 }
 
 void System::menuWykladowcy(Wykladowca* wykladowca) {
-    char  wybor;
+    char wybor;
 
     do {
         cout << "\n===== MENU WYKLADOWCY =====\n";
@@ -182,6 +236,7 @@ void System::menuWykladowcy(Wykladowca* wykladowca) {
         cout << "0. Wyloguj\n";
         cout << "Wybor: ";
         cin >> wybor;
+        cin.ignore(1000, '\n');
 
         switch (wybor) {
             case '1':
@@ -249,27 +304,54 @@ void System::wybierzPrzedmiotJakoStudent(Student* student) {
 
     int wybor;
 
-    cout << "Wybor: ";
-    cin >> wybor;
+    while (true) {
+        cout << "Wybor: ";
+        cin >> wybor;
 
-    if (wybor == 0) {
-        return;
+        if (cin.fail()) {
+            cin.clear();
+            cin.ignore(1000, '\n');
+            cout << "Niepoprawny wybor. Sprobuj ponownie.\n";
+            continue;
+        }
+
+        if (wybor == 0) return;
+
+        if (wybor < 1 || wybor > dostepneIndeksy.size()) {
+            cout << "Niepoprawny wybor.\n";
+            continue;
+        }
+
+        int indeksPrzedmiotu = dostepneIndeksy[wybor - 1];
+        przedmioty[indeksPrzedmiotu].przegladajTematy();
+
+        // wraca do przedmiotow po wyjsciu z tematow
+        cout << "\n===== TWOJE PRZEDMIOTY =====\n";
+        dostepneIndeksy.clear();
+
+        for (int i = 0; i < przedmioty.size(); i++) {
+
+            if (student->czyZapisany(przedmioty[i].getNazwa())) {
+
+                dostepneIndeksy.push_back(i);
+
+                cout << dostepneIndeksy.size()
+                     << ". "
+                     << przedmioty[i].getNazwa()
+                     << " | prowadzacy: "
+                     << przedmioty[i].getProwadzacy()
+                     << endl;
+            }
+        }
+
+        cout << "0. Powrot\n";
     }
-
-    if (wybor < 1 || wybor > dostepneIndeksy.size()) {
-        cout << "Niepoprawny wybor.\n";
-        return;
-    }
-
-    int indeksPrzedmiotu = dostepneIndeksy[wybor - 1];
-
-    przedmioty[indeksPrzedmiotu].przegladajTematy();
 }
 
 void System::utworzPrzedmiot(Wykladowca* wykladowca) {
     string nazwa;
 
-    cin.ignore();
+    //cin.ignore();
 
     cout << "Podaj nazwe nowego przedmiotu: ";
     getline(cin, nazwa);
@@ -328,26 +410,36 @@ int System::wybierzPrzedmiot() {
         return -1;
     }
 
-    int wybor;
+    while (true) {
+        int wybor;
 
-    cout << "\nLista przedmiotow:\n";
-    for (int i = 0; i < przedmioty.size(); i++) {
-        cout << i + 1 << ". " << przedmioty[i].getNazwa()
-             << " | prowadzacy: " << przedmioty[i].getProwadzacy() << endl;
+        cout << "\nLista przedmiotow:\n";
+        for (int i = 0; i < przedmioty.size(); i++) {
+            cout << i + 1 << ". " << przedmioty[i].getNazwa()
+                 << " | prowadzacy: " << przedmioty[i].getProwadzacy() << endl;
+        }
+
+        cout << "0. Powrot\n";
+        cout << "Wybor: ";
+        cin >> wybor;
+
+        if (cin.fail()) {
+            cin.clear();
+            cin.ignore(1000, '\n');
+            cout << "Niepoprawny wybor. Sprobuj ponownie.\n";
+            continue;
+        }
+        cin.ignore(1000, '\n');
+
+        if (wybor == 0) return -1;
+
+        if (wybor < 1 || wybor > przedmioty.size()) {
+            cout << "Niepoprawny wybor. Sprobuj ponownie.\n";
+            return -1;
+        }
+
+        return wybor - 1;
     }
-
-    cout << "0. Powrot\n";
-    cout << "Wybor: ";
-    cin >> wybor;
-
-    if (wybor == 0) return -1;
-
-    if (wybor < 1 || wybor > przedmioty.size()) {
-        cout << "Niepoprawny wybor.\n";
-        return -1;
-    }
-
-    return wybor - 1;
 }
 
 vector<string> podziel(string tekst, char separator) {

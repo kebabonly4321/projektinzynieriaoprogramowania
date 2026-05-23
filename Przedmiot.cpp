@@ -19,7 +19,7 @@ string Przedmiot::getProwadzacy() const {
 void Przedmiot::dodajTemat() {
     Temat t;
 
-    cin.ignore();
+    //cin.ignore();
 
     cout << "Podaj nazwe tematu: ";
     getline(cin, t.nazwa);
@@ -39,34 +39,47 @@ void Przedmiot::przegladajTematy() {
     }
 
     int wybor;
+    while (true) {
+        cout << "\nTematy:\n";
+        for (int i = 0; i < tematy.size(); i++) {
+            cout << i + 1 << ". " << tematy[i].nazwa << endl;
+        }
+        cout << "0. Powrot\n";
+        cout << "Wybierz temat: ";
+        cin >> wybor;
 
-    cout << "\nTematy:\n";
-    for (int i = 0; i < tematy.size(); i++) {
-        cout << i + 1 << ". " << tematy[i].nazwa << endl;
-    }
+        if (cin.fail()) {
+            cin.clear();
+            cin.ignore(1000, '\n');
+            cout << "Niepoprawny wybor. Sprobuj ponownie.\n";
+            continue;
+        }
+        cin.ignore(1000, '\n');
 
-    cout << "0. Powrot\n";
-    cout << "Wybierz temat: ";
-    cin >> wybor;
+        if (wybor == 0) return;
 
-    if (wybor == 0) return;
+        if (wybor < 1 || wybor > tematy.size()) {
+            cout << "Niepoprawny wybor. Sprobuj ponownie.\n";
+            continue;
+        }
 
-    if (wybor < 1 || wybor > tematy.size()) {
-        cout << "Niepoprawny wybor.\n";
-        return;
-    }
+        Temat &t = tematy[wybor - 1];
 
-    Temat &t = tematy[wybor - 1];
+        cout << "\nTemat: " << t.nazwa << endl;
+        cout << "Material:\n" << t.material << endl;
+        cout << "\nCzy chcesz rozwiazac test? 1. Tak 0. Nie: ";
+        int decyzja;
+        cin >> decyzja;
 
-    cout << "\nTemat: " << t.nazwa << endl;
-    cout << "Material:\n" << t.material << endl;
+        if (cin.fail()) {
+            cin.clear();
+            cin.ignore(1000, '\n');
+            decyzja = 0;
+        }
 
-    cout << "\nCzy chcesz rozwiazac test? 1. Tak 0. Nie: ";
-    int decyzja;
-    cin >> decyzja;
-
-    if (decyzja == 1) {
-        t.test.przeprowadzTest();
+        if (decyzja == 1) {
+            t.test.przeprowadzTest();
+        }
     }
 }
 
@@ -76,34 +89,56 @@ void Przedmiot::dodajTestDoTematu() {
         return;
     }
 
-    int wybor;
+    while (true) {
+        int wybor;
 
-    cout << "\nWybierz temat do dodania testu:\n";
-    for (int i = 0; i < tematy.size(); i++) {
-        cout << i + 1 << ". " << tematy[i].nazwa << endl;
-    }
+        cout << "\nWybierz temat do dodania testu:\n";
+        for (int i = 0; i < tematy.size(); i++) {
+            cout << i + 1 << ". " << tematy[i].nazwa << endl;
+        }
 
-    cout << "0. Powrot\n";
-    cout << "Wybor: ";
-    cin >> wybor;
+        cout << "0. Powrot\n";
+        cout << "Wybor: ";
+        cin >> wybor;
+        if (cin.fail()) {
+            cin.clear();
+            cin.ignore(1000, '\n');
+            cout << "Niepoprawny wybor.\n";
+            continue;
+        }
+        cin.ignore(1000, '\n');
 
-    if (wybor == 0) return;
+        if (wybor == 0) return;
 
-    if (wybor < 1 || wybor > tematy.size()) {
-        cout << "Niepoprawny wybor.\n";
+        if (wybor < 1 || wybor > tematy.size()) {
+            cout << "Niepoprawny wybor.\n";
+            return;
+        }
+
+        int ile;
+        while (true) {
+            cout << "Ile pytan chcesz dodac? ";
+            cin >> ile;
+
+            if (cin.fail() || ile <= 0) {
+                cin.clear();
+                cin.ignore(1000, '\n');
+                cout << "Niepoprawna liczba. Ile pytan chcesz dodac?\n";
+                cout << endl;
+                continue;
+            }
+            cin.ignore(1000, '\n');
+            break;
+        }
+
+        for (int i = 0; i < ile; i++) {
+            cout << "Dodawanie pytania " << i + 1 << endl;
+            tematy[wybor - 1].test.dodajPytanie();
+        }
+
+        cout << "Dodano test.\n";
         return;
     }
-
-    int ile;
-    cout << "Ile pytan chcesz dodac? ";
-    cin >> ile;
-
-    for (int i = 0; i < ile; i++) {
-        cout << "\nDodawanie pytania " << i + 1 << endl;
-        tematy[wybor - 1].test.dodajPytanie();
-    }
-
-    cout << "Dodano test.\n";
 }
 
 vector<Temat>& Przedmiot::getTematy() {

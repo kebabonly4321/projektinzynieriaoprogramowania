@@ -6,7 +6,7 @@ using namespace std;
 void Test::dodajPytanie() {
     Pytanie p;
 
-    cin.ignore();
+    //cin.ignore();
 
     cout << "Podaj tresc pytania: ";
     getline(cin, p.tresc);
@@ -23,9 +23,16 @@ void Test::dodajPytanie() {
     cout << "Odpowiedz D: ";
     getline(cin, p.d);
 
+    string input;
     do {
         cout << "Podaj poprawna odpowiedz A/B/C/D: ";
-        cin >> p.poprawna;
+        cin >> input;
+
+        if (input.size() == 1) {
+            p.poprawna = toupper(input[0]);
+        } else {
+            p.poprawna = '\0';
+        }
         p.poprawna = toupper(p.poprawna);
     } while (p.poprawna != 'A' && p.poprawna != 'B' && p.poprawna != 'C' && p.poprawna != 'D');
 
