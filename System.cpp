@@ -29,7 +29,7 @@ void System::uruchom() {
 }
 
 void System::menuGlowne() {
-    int wybor;
+    char wybor;
 
     do {
         cout << "\n===== SYSTEM EDUKACYJNY =====\n";
@@ -40,7 +40,7 @@ void System::menuGlowne() {
         cin >> wybor;
 
         switch (wybor) {
-            case 1: {
+            case '1': {
                 Uzytkownik* u = logowanie();
 
                 if (u != nullptr) {
@@ -54,11 +54,11 @@ void System::menuGlowne() {
                 break;
             }
 
-            case 2:
+            case '2':
                 rejestracja();
                 break;
 
-            case 0:
+            case '0':
                 cout << "Koniec programu.\n";
                 break;
 
@@ -66,7 +66,7 @@ void System::menuGlowne() {
                 cout << "Niepoprawny wybor.\n";
         }
 
-    } while (wybor != 0);
+    } while (wybor != '0');
 }
 
 void System::rejestracja() {
@@ -144,7 +144,7 @@ Uzytkownik* System::logowanie() {
 }
 
 void System::menuStudenta(Student* student) {
-    int wybor;
+    char wybor;
 
     do {
         cout << "\n===== MENU STUDENTA =====\n";
@@ -155,27 +155,24 @@ void System::menuStudenta(Student* student) {
         cin >> wybor;
 
         switch (wybor) {
-            case 1:
+            case '1':
                 zapiszStudentaNaPrzedmiot(student);
                 break;
-
-            case 2:
+            case '2':
                 wybierzPrzedmiotJakoStudent(student);
                 break;
-
-            case 0:
+            case '0':
                 cout << "Wylogowano.\n";
                 break;
-
             default:
                 cout << "Niepoprawny wybor.\n";
         }
 
-    } while (wybor != 0);
+    } while (wybor != '0');
 }
 
 void System::menuWykladowcy(Wykladowca* wykladowca) {
-    int wybor;
+    char  wybor;
 
     do {
         cout << "\n===== MENU WYKLADOWCY =====\n";
@@ -187,27 +184,23 @@ void System::menuWykladowcy(Wykladowca* wykladowca) {
         cin >> wybor;
 
         switch (wybor) {
-            case 1:
+            case '1':
                 utworzPrzedmiot(wykladowca);
                 break;
-
-            case 2:
+            case '2':
                 uzupelnijMaterialy();
                 break;
-
-            case 3:
+            case '3':
                 dodajTest();
                 break;
-
-            case 0:
+            case '0':
                 cout << "Wylogowano.\n";
                 break;
-
             default:
                 cout << "Niepoprawny wybor.\n";
         }
 
-    } while (wybor != 0);
+    } while (wybor != '0');
 }
 
 void System::zapiszStudentaNaPrzedmiot(Student* student) {

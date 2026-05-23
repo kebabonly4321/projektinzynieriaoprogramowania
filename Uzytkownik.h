@@ -6,7 +6,7 @@
 using namespace std;
 
 class Uzytkownik {
-protected:
+private:
     string login;
     string haslo;
 
