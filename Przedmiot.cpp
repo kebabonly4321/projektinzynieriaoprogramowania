@@ -16,7 +16,7 @@ string Przedmiot::getProwadzacy() const {
     return prowadzacy;
 }
 
-void Przedmiot::dodajTemat() {
+Temat Przedmiot::dodajTemat() {
     Temat t;
 
     //cin.ignore();
@@ -30,6 +30,7 @@ void Przedmiot::dodajTemat() {
     tematy.push_back(t);
 
     cout << "Dodano temat.\n";
+    return t;
 }
 
 void Przedmiot::przegladajTematy() {
@@ -83,10 +84,10 @@ void Przedmiot::przegladajTematy() {
     }
 }
 
-void Przedmiot::dodajTestDoTematu() {
+int Przedmiot::dodajTestDoTematu() {
     if (tematy.empty()) {
         cout << "Brak tematow. Najpierw dodaj temat.\n";
-        return;
+        return -1;
     }
 
     while (true) {
@@ -108,11 +109,11 @@ void Przedmiot::dodajTestDoTematu() {
         }
         cin.ignore(1000, '\n');
 
-        if (wybor == 0) return;
+        if (wybor == 0) return -1;
 
         if (wybor < 1 || wybor > tematy.size()) {
             cout << "Niepoprawny wybor.\n";
-            return;
+            return -1;
         }
 
         int ile;
@@ -137,7 +138,7 @@ void Przedmiot::dodajTestDoTematu() {
         }
 
         cout << "Dodano test.\n";
-        return;
+        return wybor -1;
     }
 }
 

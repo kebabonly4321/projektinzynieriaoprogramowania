@@ -1,14 +1,26 @@
 #include "System.h"
 #include <iostream>
 #include <fstream>
+#include <sys/stat.h>
+
+#ifdef _WIN32
+    #include <direct.h>
+    #define mkdir _mkdir
+#else
+    #include <unistd.h>
+#endif
 
 using namespace std;
 
-System::System() {
-    dozwoloneAlbumy = {1001, 1002, 1003, 1004};
+System::System(bool czyWczytajDane) {
+    stworzFolder("output");
+
+    dozwoloneAlbumy = {1001, 1002, 1003, 1004, 1005};
     dozwoloneIdWykladowcow = {501, 502, 503};
 
-    wczytajDane();
+    if (czyWczytajDane) {
+        wczytajDane();
+    }
 
     if (przedmioty.empty()) {
         przedmioty.push_back(Przedmiot("Programowanie C++", "admin"));
@@ -17,11 +29,8 @@ System::System() {
 }
 
 System::~System() {
-    zapiszDane();
-
-    for (Uzytkownik* u : uzytkownicy) {
-        delete u;
-    }
+    for (Student* s : studenci) delete s;
+    for (Wykladowca* w : wykladowcy) delete w;
 }
 
 void System::uruchom() {
@@ -71,41 +80,62 @@ void System::menuGlowne() {
 }
 
 void System::rejestracja() {
-    string login, haslo, hasloPowtorzone;
-    char typ;
+    string login, haslo, hasloPowtorzone, typ;
+    int counter = 0;
 
     cout << "\n===== REJESTRACJA =====\n";
-    cout << "Login: ";
-    cin >> login;
+    while (true) {
+        if (counter >= 3) {
+            cout << "Przekroczono limit prob rejestracji.\n";
+            return;
+        }
 
-    if (czyLoginIstnieje(login)) {
-        cout << "Taki login juz istnieje.\n";
-        return;
+        cout << "Login: ";
+        cin >> login;
+
+        if (czyLoginIstnieje(login)) {
+            cout << "Taki login juz istnieje.\n";
+            counter++;
+            continue;
+        }
+        break;
     }
 
-    while (true) {
+    counter = 0;
+
+    while (true) { // Hasło
+        if (counter >= 3) {
+            cout << "Przekroczono limit prob rejestracji.\n";
+            return;
+        }
+
         cout << "Haslo: ";
         cin >> haslo;
         cout << "Powtorz haslo: ";
         cin >> hasloPowtorzone;
 
-        if (haslo == hasloPowtorzone) {
-            break;
-        }
+        if (haslo == hasloPowtorzone) break;
+
         cout << "Hasla nie sa takie same. Sprobuj ponownie.\n";
+        counter++;
     }
 
-    while (true) {
+    counter = 0;
+
+    while (true) { // Typ konta
         cout << "Wybierz typ konta:\n";
         cout << "1. Student\n";
         cout << "2. Wykladowca\n";
         cout << "Wybor: ";
         cin >> typ;
-        cin.ignore(1000, '\n');
 
-        if (typ == '1') {
-            int album;
+        if (typ == "1") { // Student
             while (true) {
+                if (counter >= 3) {
+                    cout << "Przekroczono limit prob rejestracji.\n";
+                    return;
+                }
+                int album;
                 cout << "Podaj numer albumu: ";
                 cin >> album;
 
@@ -113,37 +143,37 @@ void System::rejestracja() {
                     cin.clear();
                     cin.ignore(1000, '\n');
                     cout << "Niepoprawny numer.\n";
-                    cout << "1. Sprobuj ponownie.\n";
-                    cout << "0. Powrot.\n";
-                    cout << "Wybor: ";
-                    char input;
-                    cin >> input;
-                    cin.ignore(1000, '\n');
-                    if (input == '0') return;
+                    counter++;
                     continue;
                 }
-                cin.ignore(1000, '\n');
 
                 if (!czyAlbumDozwolony(album)) {
                     cout << "Nie ma takiego numeru albumu w bazie.\n";
-                    cout << "1. Sprobuj ponownie.\n";
-                    cout << "0. Powrot.\n";
-                    cout << "Wybor: ";
-                    char input;
-                    cin >> input;
-                    cin.ignore(1000, '\n');
-                    if (input == '0') return;
+                    counter++;
                     continue;
                 }
-                break;
-            }
-            uzytkownicy.push_back(new Student(login, haslo, album));
-            cout << "Zarejestrowano studenta.\n";
-            return;
 
-        } else if (typ == '2') {
-            int id;
+                if (czyAlbumZajety(album)) {
+                    cout << "Podany numer albumu jest zajety.\n";
+                    continue;
+                }
+
+                Student* nowyStudent = new Student(login, haslo, album);
+                studenci.push_back(nowyStudent);
+                zapiszStudenta(nowyStudent);
+                cout << "Zarejestrowano studenta.\n";
+                return;
+            }
+        }
+
+        if (typ == "2") { // Wykladowca
             while (true) {
+                if (counter >= 3) {
+                    cout << "Przekroczono limit prob rejestracji.\n";
+                    return;
+                }
+
+                int id;
                 cout << "Podaj ID wykladowcy: ";
                 cin >> id;
 
@@ -151,62 +181,67 @@ void System::rejestracja() {
                     cin.clear();
                     cin.ignore(1000, '\n');
                     cout << "Niepoprawne ID.\n";
-                    cout << "1. Sprobuj ponownie.\n";
-                    cout << "0. Powrot.\n";
-                    cout << "Wybor: ";
-                    char input;
-                    cin >> input;
-                    cin.ignore(1000, '\n');
-                    if (input == '0') return;
+                    counter++;
                     continue;
                 }
-                cin.ignore(1000, '\n');
 
                 if (!czyIdWykladowcyDozwolone(id)) {
                     cout << "Nie ma takiego ID wykladowcy w bazie.\n";
-                    cout << "1. Sprobuj ponownie\n.";
-                    cout << "0. Powrot.\n";
-                    cout << "Wybor: ";
-                    char input;
-                    cin >> input;
-                    cin.ignore(1000, '\n');
-                    if (input == '0') return;
+                    counter++;
                     continue;
                 }
-                break;
+
+                if (czyIdWykladowcyZajete(id)) {
+                    cout << "Podane id jest zajete.\n";
+                    continue;
+                }
+
+                Wykladowca* nowyWykladowca = new Wykladowca(login, haslo, id);
+                wykladowcy.push_back(nowyWykladowca);
+                zapiszWykladowce(nowyWykladowca);
+                cout << "Zarejestrowano wykladowce.\n";
+                return;
             }
-            uzytkownicy.push_back(new Wykladowca(login, haslo, id));
-            cout << "Zarejestrowano wykladowce.\n";
-            return;
-        } else {
-            cout << "Niepoprawny typ konta.\n";
         }
+        cout << "Niepoprawny typ konta.\n";
     }
 }
 
 Uzytkownik* System::logowanie() {
     string login, haslo;
+    int counter = 0;
 
-    cout << "\n===== LOGOWANIE =====\n";
-    cout << "Login: ";
-    cin >> login;
+    while (counter < 3) {
+        cout << "\n===== LOGOWANIE =====\n";
+        cout << "Login: ";
+        cin >> login;
 
-    cout << "Haslo: ";
-    cin >> haslo;
+        cout << "Haslo: ";
+        cin >> haslo;
 
-    for (Uzytkownik* u : uzytkownicy) {
-        if (u->getLogin() == login && u->sprawdzHaslo(haslo)) {
-            cout << "Zalogowano jako: " << u->getTyp() << endl;
-            return u;
+        for (Student* s : studenci) {
+            if (s->getLogin() == login && s->sprawdzHaslo(haslo)) {
+                cout << "Zalogowano jako: Student"  << endl;
+                return s;
+            }
         }
-    }
 
-    cout << "Bledny login lub haslo.\n";
+        for (Wykladowca* w : wykladowcy) {
+            if (w->getLogin() == login && w->sprawdzHaslo(haslo)) {
+                cout << "Zalogowano jako: Wykladowca" << endl;
+                return w;
+            }
+        }
+
+        cout << "Bledny login lub haslo.\n";
+        counter++;
+    }
+    cout << "Przekroczono limit prob logowania.\n";
     return nullptr;
 }
 
 void System::menuStudenta(Student* student) {
-    char wybor;
+    int wybor = -1;
 
     do {
         cout << "\n===== MENU STUDENTA =====\n";
@@ -214,28 +249,35 @@ void System::menuStudenta(Student* student) {
         cout << "2. Wybierz przedmiot i przegladaj baze wiedzy\n";
         cout << "0. Wyloguj\n";
         cout << "Wybor: ";
-        cin >> wybor;
-        cin.ignore(1000, '\n');
+
+        if (!(cin >> wybor)) {
+            cin.clear();
+            cin.ignore(1000, '\n');
+            wybor = -1;
+            cout << "Niepoprawny wybor.\n";
+            continue;
+        }
 
         switch (wybor) {
-            case '1':
+            case 1:
                 zapiszStudentaNaPrzedmiot(student);
                 break;
-            case '2':
+            case 2:
                 wybierzPrzedmiotJakoStudent(student);
                 break;
-            case '0':
+            case 0:
                 cout << "Wylogowano.\n";
                 break;
             default:
                 cout << "Niepoprawny wybor.\n";
+                break;
         }
 
-    } while (wybor != '0');
+    } while (wybor != 0);
 }
 
 void System::menuWykladowcy(Wykladowca* wykladowca) {
-    char wybor;
+    int wybor = -1;
 
     do {
         cout << "\n===== MENU WYKLADOWCY =====\n";
@@ -244,27 +286,34 @@ void System::menuWykladowcy(Wykladowca* wykladowca) {
         cout << "3. Dodaj test do tematu\n";
         cout << "0. Wyloguj\n";
         cout << "Wybor: ";
-        cin >> wybor;
-        cin.ignore(1000, '\n');
+
+        if (!(cin >> wybor)) {
+            cin.clear();
+            cin.ignore(1000, '\n');
+            wybor = -1;
+            cout << "Niepoprawny wybor.\n";
+            continue;
+        }
 
         switch (wybor) {
-            case '1':
+            case 1:
                 utworzPrzedmiot(wykladowca);
                 break;
-            case '2':
+            case 2:
                 uzupelnijMaterialy();
                 break;
-            case '3':
+            case 3:
                 dodajTest();
                 break;
-            case '0':
+            case 0:
                 cout << "Wylogowano.\n";
                 break;
             default:
                 cout << "Niepoprawny wybor.\n";
-        }
+                break;
+            }
 
-    } while (wybor != '0');
+    } while (wybor != 0);
 }
 
 void System::zapiszStudentaNaPrzedmiot(Student* student) {
@@ -280,6 +329,7 @@ void System::zapiszStudentaNaPrzedmiot(Student* student) {
     }
 
     student->zapiszNaPrzedmiot(nazwa);
+    zapiszZapisStudentaNaPrzedmiot(student, nazwa);
     cout << "Zapisano na przedmiot: " << nazwa << endl;
 }
 
@@ -360,13 +410,14 @@ void System::wybierzPrzedmiotJakoStudent(Student* student) {
 void System::utworzPrzedmiot(Wykladowca* wykladowca) {
     string nazwa;
 
-    //cin.ignore();
+    cin.clear();
+    cin.ignore(1000, '\n');
 
     cout << "Podaj nazwe nowego przedmiotu: ";
     getline(cin, nazwa);
 
     przedmioty.push_back(Przedmiot(nazwa, wykladowca->getLogin()));
-
+    zapiszUtworzonyPrzedmiot(nazwa, wykladowca->getLogin());
     cout << "Dodano przedmiot.\n";
 }
 
@@ -375,7 +426,9 @@ void System::uzupelnijMaterialy() {
 
     if (indeks == -1) return;
 
-    przedmioty[indeks].dodajTemat();
+    Temat t = przedmioty[indeks].dodajTemat();
+
+    zapiszTemat(przedmioty[indeks].getNazwa(), t);
 }
 
 void System::dodajTest() {
@@ -383,15 +436,20 @@ void System::dodajTest() {
 
     if (indeks == -1) return;
 
-    przedmioty[indeks].dodajTestDoTematu();
+    int indeksTematu = przedmioty[indeks].dodajTestDoTematu();
+    if (indeksTematu == -1) return;
+
+    vector<Temat>& tematy = przedmioty[indeks].getTematy();
+    Temat& t = tematy[indeksTematu];
+
+    zapiszTest(przedmioty[indeks].getNazwa(), t.nazwa, &t.test);
 }
 
 bool System::czyLoginIstnieje(string login) const {
-    for (Uzytkownik* u : uzytkownicy) {
-        if (u->getLogin() == login) {
-            return true;
-        }
-    }
+    for (Student* s : studenci)
+        if (s->getLogin() == login) return true;
+    for (Wykladowca* w : wykladowcy)
+        if (w->getLogin() == login) return true;
     return false;
 }
 
@@ -412,6 +470,21 @@ bool System::czyIdWykladowcyDozwolone(int id) const {
     }
     return false;
 }
+
+bool System::czyAlbumZajety(int numer) const {
+    for (Student* s : studenci) {
+        if (s->getNumerAlbumu() == numer) return true;
+    }
+    return false;
+}
+
+bool System::czyIdWykladowcyZajete(int id) const {
+    for (Wykladowca* w : wykladowcy) {
+        if (w->getId() == id) return true;
+    }
+    return false;
+}
+
 
 int System::wybierzPrzedmiot() {
     if (przedmioty.empty()) {
@@ -444,7 +517,7 @@ int System::wybierzPrzedmiot() {
 
         if (wybor < 1 || wybor > przedmioty.size()) {
             cout << "Niepoprawny wybor. Sprobuj ponownie.\n";
-            return -1;
+            continue;
         }
 
         return wybor - 1;
@@ -469,14 +542,6 @@ vector<string> podziel(string tekst, char separator) {
     return wynik;
 }
 
-void System::zapiszDane() {
-    zapiszUzytkownikow();
-    zapiszPrzedmioty();
-    zapiszZapisyStudentow();
-    zapiszTematy();
-    zapiszTesty();
-}
-
 void System::wczytajDane() {
     wczytajUzytkownikow();
     wczytajPrzedmioty();
@@ -485,66 +550,125 @@ void System::wczytajDane() {
     wczytajTesty();
 }
 
-void System::zapiszUzytkownikow() {
-    ofstream plik("uzytkownicy.txt");
+void System::zapiszStudenta(Student* student) {
+    ofstream plik(makePath("uzytkownicy.txt"), ios::app);
 
-    for (Uzytkownik* u : uzytkownicy) {
-        if (u->getTyp() == "Student") {
-            Student* s = dynamic_cast<Student*>(u);
-
-            plik << "Student;"
-                 << s->getLogin() << ";"
-                 << s->getHaslo() << ";"
-                 << s->getNumerAlbumu() << endl;
-        }
-
-        else if (u->getTyp() == "Wykladowca") {
-            Wykladowca* w = dynamic_cast<Wykladowca*>(u);
-
-            plik << "Wykladowca;"
-                 << w->getLogin() << ";"
-                 << w->getHaslo() << ";"
-                 << w->getId() << endl;
-        }
+    if (!plik.is_open()) {
+        cout << "Blad zapisu studenta.\n";
+        return;
     }
+
+    plik << "Student;"
+        << student->getLogin()
+        << ';' << student->getHaslo()
+        << ';' << student->getNumerAlbumu() << endl;
+    plik.close();
+}
+
+void System::zapiszStudenta(Student* student, string nazwaPliku) {
+    ofstream plik(makePath(nazwaPliku), ios::app);
+
+    if (!plik.is_open()) {
+        cout << "Blad zapisu studenta.\n";
+        return;
+    }
+
+    plik << "Student;"
+        << student->getLogin()
+        << ';' << student->getHaslo()
+        << ';' << student->getNumerAlbumu() << endl;
+    plik.close();
+}
+
+void System::zapiszWykladowce(Wykladowca* wykladowca) {
+    ofstream plik(makePath("uzytkownicy.txt"), ios::app);
+
+    if (!plik.is_open()) {
+        cout << "Blad zapisu wykladowcy.\n";
+        return;
+    }
+
+    plik << "Wykladowca;"
+        << wykladowca->getLogin()
+        << ';' << wykladowca->getHaslo()
+        << ';' << wykladowca->getId() << endl;
+    plik.close();
+}
+
+void System::zapiszWykladowce(Wykladowca* wykladowca, string nazwaPliku) {
+    ofstream plik(makePath(nazwaPliku), ios::app);
+
+    if (!plik.is_open()) {
+        cout << "Blad zapisu wykladowcy.\n";
+        return;
+    }
+
+    plik << "Wykladowca;"
+        << wykladowca->getLogin()
+        << ';' << wykladowca->getHaslo()
+        << ';' << wykladowca->getId() << endl;
+    plik.close();
+}
+
+void System::zapiszZapisStudentaNaPrzedmiot(Student* student, string nazwaPrzedmiotu) {
+    ofstream plik(makePath("zapisy.txt"), ios::app);
+
+    if (!plik.is_open()) {
+        cout << "Blad zapisu do przedmiotu.\n";
+        return;
+    }
+    plik << student->getLogin() << ';'
+                << nazwaPrzedmiotu << endl;
+    plik.close();
+}
+
+void System::zapiszUtworzonyPrzedmiot(string nazwa, string prowadzacy) {
+    ofstream plik(makePath("przedmioty.txt"), ios::app);
+
+    if (!plik.is_open()) {
+        cout << "Blad zapisu przedmiotow.\n";
+        return;
+    }
+
+    plik << nazwa << ';'
+             << prowadzacy << endl;
 
     plik.close();
 }
 
-void System::zapiszPrzedmioty() {
-    ofstream plik("przedmioty.txt");
+void System::zapiszUtworzonyPrzedmiot(string nazwa, string prowadzacy, string nazwaPliku) {
+    ofstream plik(makePath(nazwaPliku), ios::app);
 
-    for (Przedmiot p : przedmioty) {
-        plik << p.getNazwa() << ";"
-             << p.getProwadzacy() << endl;
+    if (!plik.is_open()) {
+        cout << "Blad zapisu przedmiotow.\n";
+        return;
     }
+
+    plik << nazwa << ';'
+             << prowadzacy << endl;
 
     plik.close();
 }
 
-void System::zapiszZapisyStudentow() {
-    ofstream plik("zapisy.txt");
+void System::zapiszTemat(string nazwaPrzedmiotu, Temat temat) {
+    ofstream plik(makePath("tematy.txt"), ios::app);
 
-    for (Uzytkownik* u : uzytkownicy) {
-        if (u->getTyp() == "Student") {
-            Student* s = dynamic_cast<Student*>(u);
-
-            vector<string> zapisy = s->getZapisanePrzedmioty();
-
-            for (string przedmiot : zapisy) {
-                plik << s->getLogin() << ";"
-                     << przedmiot << endl;
-            }
-        }
+    if (!plik.is_open()) {
+        cout << "Blad zapisu tematu.\n";
+        return;
     }
 
+    plik << nazwaPrzedmiotu << ';'
+            << temat.nazwa << ';'
+            << temat.material << endl;
     plik.close();
 }
 
 void System::wczytajUzytkownikow() {
-    ifstream plik("uzytkownicy.txt");
+    ifstream plik(makePath("uzytkownicy.txt"));
 
     if (!plik.is_open()) {
+        cout << "Blad odczytu z systemu.\n";
         return;
     }
 
@@ -563,11 +687,45 @@ void System::wczytajUzytkownikow() {
         int numer = stoi(dane[3]);
 
         if (typ == "Student") {
-            uzytkownicy.push_back(new Student(login, haslo, numer));
+            studenci.push_back(new Student(login, haslo, numer));
         }
 
         else if (typ == "Wykladowca") {
-            uzytkownicy.push_back(new Wykladowca(login, haslo, numer));
+            wykladowcy.push_back(new Wykladowca(login, haslo, numer));
+        }
+    }
+
+    plik.close();
+}
+
+void System::wczytajUzytkownikow(string nazwaPliku) {
+    ifstream plik(makePath(nazwaPliku));
+
+    if (!plik.is_open()) {
+        cout << "Blad odczytu z systemu.\n";
+        return;
+    }
+
+    string linia;
+
+    while (getline(plik, linia)) {
+        vector<string> dane = podziel(linia, ';');
+
+        if (dane.size() != 4) {
+            continue;
+        }
+
+        string typ = dane[0];
+        string login = dane[1];
+        string haslo = dane[2];
+        int numer = stoi(dane[3]);
+
+        if (typ == "Student") {
+            studenci.push_back(new Student(login, haslo, numer));
+        }
+
+        else if (typ == "Wykladowca") {
+            wykladowcy.push_back(new Wykladowca(login, haslo, numer));
         }
     }
 
@@ -575,7 +733,32 @@ void System::wczytajUzytkownikow() {
 }
 
 void System::wczytajPrzedmioty() {
-    ifstream plik("przedmioty.txt");
+    ifstream plik(makePath("przedmioty.txt"));
+
+    if (!plik.is_open()) {
+        return;
+    }
+
+    string linia;
+
+    while (getline(plik, linia)) {
+        vector<string> dane = podziel(linia, ';');
+
+        if (dane.size() != 2) {
+            continue;
+        }
+
+        string nazwa = dane[0];
+        string prowadzacy = dane[1];
+
+        przedmioty.push_back(Przedmiot(nazwa, prowadzacy));
+    }
+
+    plik.close();
+}
+
+void System::wczytajPrzedmioty(string nazwaPliku) {
+    ifstream plik(makePath(nazwaPliku));
 
     if (!plik.is_open()) {
         return;
@@ -600,7 +783,7 @@ void System::wczytajPrzedmioty() {
 }
 
 void System::wczytajZapisyStudentow() {
-    ifstream plik("zapisy.txt");
+    ifstream plik(makePath("zapisy.txt"));
 
     if (!plik.is_open()) {
         return;
@@ -638,49 +821,29 @@ Przedmiot* System::znajdzPrzedmiotPoNazwie(string nazwa) {
     return nullptr;
 }
 
-void System::zapiszTematy() {
-    ofstream plik("tematy.txt");
+void System::zapiszTest(string nazwaPrzedmiotu, string nazwaTematu, Test* test) {
+    ofstream plik(makePath("testy.txt"), ios::app);
 
-    for (Przedmiot& p : przedmioty) {
-        vector<Temat>& tematy = p.getTematy();
-
-        for (Temat& t : tematy) {
-            plik << p.getNazwa() << ";"
-                 << t.nazwa << ";"
-                 << t.material << endl;
-        }
+    if (!plik.is_open()) {
+        cout << "Blad zapisu testu.\n";
+        return;
     }
 
-    plik.close();
-}
-
-void System::zapiszTesty() {
-    ofstream plik("testy.txt");
-
-    for (Przedmiot& p : przedmioty) {
-        vector<Temat>& tematy = p.getTematy();
-
-        for (Temat& t : tematy) {
-            vector<Pytanie> pytania = t.test.getPytania();
-
-            for (Pytanie pytanie : pytania) {
-                plik << p.getNazwa() << ";"
-                     << t.nazwa << ";"
-                     << pytanie.tresc << ";"
-                     << pytanie.a << ";"
-                     << pytanie.b << ";"
-                     << pytanie.c << ";"
-                     << pytanie.d << ";"
-                     << pytanie.poprawna << endl;
-            }
-        }
+    for (Pytanie& p : test->getPytania()) {
+        plik << nazwaPrzedmiotu << ';'
+            << nazwaTematu << ';'
+            << p.tresc << ';'
+            << p.a << ';'
+            << p.b << ';'
+            << p.c << ';'
+            << p.d << ';'
+            << p.poprawna << endl;
     }
-
     plik.close();
 }
 
 void System::wczytajTematy() {
-    ifstream plik("tematy.txt");
+    ifstream plik(makePath("tematy.txt"));
 
     if (!plik.is_open()) {
         return;
@@ -710,7 +873,7 @@ void System::wczytajTematy() {
 }
 
 void System::wczytajTesty() {
-    ifstream plik("testy.txt");
+    ifstream plik(makePath("testy.txt"));
 
     if (!plik.is_open()) {
         return;
@@ -756,11 +919,75 @@ void System::wczytajTesty() {
 }
 
 Student* System::znajdzStudentaPoLoginie(string login) {
-    for (Uzytkownik* u : uzytkownicy) {
-        if (u->getTyp() == "Student" && u->getLogin() == login) {
-            return dynamic_cast<Student*>(u);
+    for (Student* s : studenci) {
+        if (s->getLogin() == login) return s;
+    }
+    return nullptr;
+}
+
+bool System::stworzFolder(string nazwa) {
+    struct stat info;
+
+    if (stat(nazwa.c_str(), &info) == 0) {
+        if (S_ISDIR(info.st_mode)) {
+            return true; // istnieje, ok
         }
+        cout << "Istnieje juz plik o nazwie: " << nazwa << '\n';
+        return false;
     }
 
-    return nullptr;
+    int result;
+
+#ifdef _WIN32
+    result = _mkdir(nazwa.c_str());
+#else
+    result = mkdir(nazwa.c_str(), 0755);
+#endif
+
+    if (result != 0) {
+        cout << "Blad tworzenia folderu: " << nazwa << endl;
+        return false;
+    }
+
+    return true;
+}
+
+vector<Wykladowca *> System::getWykladowcy() const {
+    return wykladowcy;
+}
+
+void System::setPath(string path) {
+    this->path = path;
+}
+
+string System::getPath() {
+    return path;
+}
+
+string System::makePath(string nazwaPliku) {
+    return path + nazwaPliku;
+}
+
+bool System::clearFile(string nazwaPliku) {
+    std::ofstream plik(makePath(nazwaPliku), std::ios::trunc);
+
+    if (!plik.is_open()) {
+        std::cout << "Blad odczytu pliku: " << nazwaPliku << "\n";
+        return false;
+    }
+
+    if (plik.fail()) {
+        std::cout << "Blad operacji na pliku: " << nazwaPliku << "\n";
+    }
+
+    plik.close();
+    return true;
+}
+
+vector<Przedmiot> System::getPrzedmioty() const {
+    return przedmioty;
+}
+
+vector<Student*> System::getStudenci() const {
+    return studenci;
 }

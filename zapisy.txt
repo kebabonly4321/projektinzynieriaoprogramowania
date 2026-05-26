@@ -1,2 +1,0 @@
-hubertp;Skakanie na skakance
-hubertp;Programowanie C++

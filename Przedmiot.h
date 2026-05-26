@@ -25,9 +25,9 @@ public:
     string getNazwa() const;
     string getProwadzacy() const;
 
-    void dodajTemat();
+    Temat dodajTemat();
     void przegladajTematy();
-    void dodajTestDoTematu();
+    int dodajTestDoTematu();
     vector<Temat>& getTematy();
     void dodajTematZPliku(string nazwa, string material);
 };

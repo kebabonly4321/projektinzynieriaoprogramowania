@@ -12,19 +12,20 @@ using namespace std;
 
 class System {
 private:
-    vector<Uzytkownik*> uzytkownicy;
+    vector<Student*> studenci;
+    vector<Wykladowca*> wykladowcy;
     vector<Przedmiot> przedmioty;
 
     vector<int> dozwoloneAlbumy;
     vector<int> dozwoloneIdWykladowcow;
+    string path = "output/";
 
 public:
-    System();
+    System(bool czyWczytajDane);
     ~System();
 
     void uruchom();
 
-private:
     void menuGlowne();
     void rejestracja();
     Uzytkownik* logowanie();
@@ -42,29 +43,62 @@ private:
     bool czyLoginIstnieje(string login) const;
     bool czyAlbumDozwolony(int numer) const;
     bool czyIdWykladowcyDozwolone(int id) const;
+    bool czyAlbumZajety(int numer) const;
+    bool czyIdWykladowcyZajete(int id) const;
 
     int wybierzPrzedmiot();
 
-    void zapiszDane();
     void wczytajDane();
 
-    void zapiszUzytkownikow();
-    void zapiszPrzedmioty();
-    void zapiszZapisyStudentow();
+    void zapiszStudenta(Student *student);
+
+    void zapiszStudenta(Student *student, string nazwaPliku);
+
+    void zapiszWykladowce(Wykladowca *wykladowca);
+
+    void zapiszWykladowce(Wykladowca *wykladowca, string nazwaPliku);
+
+    void zapiszZapisStudentaNaPrzedmiot(Student *student, string nazwaPrzedmiotu);
+
+    void zapiszUtworzonyPrzedmiot(string nazwa, string prowadzacy);
+
+    void zapiszUtworzonyPrzedmiot(string nazwa, string prowadzacy, string nazwaPliku);
+
+    void zapiszTemat(string nazwaPrzedmiotu, Temat temat);
 
     void wczytajUzytkownikow();
+
+    void wczytajUzytkownikow(string nazwaPliku);
+
     void wczytajPrzedmioty();
+
+    void wczytajPrzedmioty(string nazwaPliku);
+
     void wczytajZapisyStudentow();
 
-    void zapiszTematy();
-    void zapiszTesty();
+    void zapiszTest(string nazwaPrzedmiotu, string nazwaTematu, Test *test);
 
     void wczytajTematy();
     void wczytajTesty();
 
-Przedmiot* znajdzPrzedmiotPoNazwie(string nazwa);
+    Przedmiot* znajdzPrzedmiotPoNazwie(string nazwa);
 
     Student* znajdzStudentaPoLoginie(string login);
+
+    bool stworzFolder(string nazwa);
+
+    vector<Wykladowca *> getWykladowcy() const;
+
+    void setPath(string path);
+    string getPath();
+
+    string makePath(string nazwaPliku);
+
+    bool clearFile(string nazwaPliku);
+
+    vector<Przedmiot> getPrzedmioty() const;
+
+    vector<Student *> getStudenci() const;
 };
 
 #endif
