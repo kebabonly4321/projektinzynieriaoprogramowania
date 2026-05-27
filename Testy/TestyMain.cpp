@@ -8,6 +8,8 @@ int main() {
 
     // Test 1: Student
     {
+        std::cout << "Test 1: [START]" << std::endl;
+
         Student student("loginTest", "haslo123", 1001);
 
         assert(student.getLogin() == "loginTest");
@@ -22,8 +24,10 @@ int main() {
 
     // Test 2: System + Student i Przedmiot
     {
+        std::cout << "Test 2: [START]" << std::endl;
+
         bool wczytajDane = false;
-        System system(false);
+        System system(wczytajDane);
 
         Student* student = new Student("testLogin", "haslo321", 1001);
         system.getStudenci().push_back(student);
@@ -41,8 +45,10 @@ int main() {
     // Test 3: System + pliki zapis/odczyt + Wykladowca
 
     {
+        std::cout << "Test 3: [START]" << std::endl;
+
         bool wczytajDane = false;
-        System system(false);
+        System system(wczytajDane);
 
         assert(system.stworzFolder(system.getPath()));
         assert(system.clearFile("uzytkownicy_test.txt"));
@@ -54,6 +60,7 @@ int main() {
 
         assert(system.getWykladowcy().size() == 1);
         assert(system.getWykladowcy().back()->getLogin() == "w1");
+        assert(system.getWykladowcy().back()->getId() == 501);
 
         std::cout << "Test 3: [OK]" << std::endl;
     }
