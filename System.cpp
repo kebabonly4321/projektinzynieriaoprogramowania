@@ -5,7 +5,6 @@
 
 #ifdef _WIN32
     #include <direct.h>
-    #define mkdir _mkdir
 #else
     #include <unistd.h>
 #endif

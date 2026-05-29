@@ -3,10 +3,10 @@
 
 #include "../System.h"
 #include "../Student.h"
+#include "../Wykladowca.h"
 
 int main() {
 
-    // Test 1: Student
     {
         std::cout << "Test 1: [START]" << std::endl;
 
@@ -22,7 +22,6 @@ int main() {
         std::cout << "Test 1: [OK]" << std::endl;
     }
 
-    // Test 2: System + Student i Przedmiot
     {
         std::cout << "Test 2: [START]" << std::endl;
 
@@ -42,8 +41,6 @@ int main() {
         std::cout << "Test 2: [OK]" << std::endl;
     }
 
-    // Test 3: System + pliki zapis/odczyt + Wykladowca
-
     {
         std::cout << "Test 3: [START]" << std::endl;
 
@@ -58,11 +55,40 @@ int main() {
         system.zapiszWykladowce(w, "uzytkownicy_test.txt");
         system.wczytajUzytkownikow("uzytkownicy_test.txt");
 
+        Wykladowca* wczytany = system.getWykladowcy().back();
+        assert(wczytany->getLogin() == "w1");
+        assert(wczytany->getId() == 501);
         assert(system.getWykladowcy().size() == 1);
-        assert(system.getWykladowcy().back()->getLogin() == "w1");
-        assert(system.getWykladowcy().back()->getId() == 501);
 
         std::cout << "Test 3: [OK]" << std::endl;
+    }
+
+    {
+        std::cout << "Test 4: [START]" << std::endl;
+
+        Wykladowca wykladowca("loginTest", "haslo321", 501);
+
+        assert(wykladowca.getLogin() == "loginTest");
+        assert(wykladowca.getHaslo() == "haslo321");
+        assert(wykladowca.getId() == 501);
+        assert(wykladowca.getTyp() == "Wykladowca");
+        assert(wykladowca.sprawdzHaslo("blednehaslo123") == false);
+        assert(wykladowca.sprawdzHaslo("haslo321") == true);
+
+        std::cout << "Test 4: [OK]" << std::endl;
+
+    }
+
+    {
+        std::cout << "Test 5: [START]" << std::endl;
+
+        Przedmiot p("testowy", "wyk1");
+
+        assert(p.getNazwa() == "testowy");
+        assert(p.getProwadzacy() == "wyk1");
+        assert(p.getTematy().empty() == true);
+
+        std::cout << "Test 5: [OK]" << std::endl;
     }
 
     std::cout << "Wszystkie testy zakończone sukcesem" << std::endl;
